@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>esp32 to chrome</title>
+</head>
+
+<body>
+    <h1>esp32 to chrome</h1>
+    <button id="connectBtn" onclick="connectToDevice()">Connect</button>
+    <script>
+        function connectToDevice() {
+            navigator.bluetooth.requestDevice({
+                    acceptAllDevices: true,
+                    optionalServices: ["0000180a-0000-1000-8000-00805f9b34fb"]
+                })
+                .then(device => {
+                    // Connect to the device
+                    return device.gatt.connect();
+                })
+                .then(server => {
+                    // Get the Data Service
+                    return server.getPrimaryService("0000180a-0000-1000-8000-00805f9b34fb");
+                })
+                // ...
+                .then(service => {
+                    // Get the Data Characteristic
+                    return service.getCharacteristic('00002a23-0000-1000-8000-00805f9b34fb');
+                })
+                .then(characteristic => {
+                    // Subscribe to data notifications
+                    return characteristic.startNotifications();
+                })
+                .then(characteristic => {
+                    // Set up event listener for data
+                    characteristic.addEventListener('characteristicvaluechanged', handleData);
+                })
+                .catch(error => {
+                    console.log("Error: " + error);
+                });
+        }
+        document.addEventListener("DOMContentLoaded", function() {
+            document.getElementById("connectBtn").addEventListener("click", connectToDevice);
+        });
+
+        function handleData(event) {
+            var value = event.target.value;
+            var decoder = new TextDecoder();
+            var data = decoder.decode(value);
+            console.log("Received Data: " + data);
+        }
+    </script>
+</body>
+
+</html>
